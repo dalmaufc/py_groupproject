@@ -6,14 +6,14 @@ from simfin_api import SimFinAPI  # Import your API wrapper
 # Initialize SimFin API
 api = SimFinAPI(api_key="YOUR_SIMFIN_API_KEY")  # Replace with your actual key
 
-# Load the trained XGBoost model
-model = xgb.XGBRegressor()
+# Load the trained XGBoost classification model
+model = xgb.XGBClassifier()
 model.load_model("mag7_final_model.json")
 
 # Streamlit UI
-st.title("📈 AAPL Stock Price Prediction App")
+st.title("📈 AAPL Stock Movement Prediction App")
 
-# Select date (default to today's date)
+# Select date (default to today)
 selected_date = st.date_input("Select a date:")
 
 # Fetch the latest AAPL stock data dynamically
@@ -23,6 +23,17 @@ st.write("📡 Fetching AAPL stock data from SimFin API... Please wait.")
 prices_df = api.get_share_prices("AAPL", "2024-01-01", str(selected_date))
 income_df = api.get_income_statement("AAPL", "2024-01-01", str(selected_date))
 balance_df = api.get_balance_sheet("AAPL", "2024-01-01", str(selected_date))
+
+# Ensure date columns are in datetime format
+prices_df["date"] = pd.to_datetime(prices_df["date"])
+income_df["date"] = pd.to_datetime(income_df["date"])
+balance_df["date"] = pd.to_datetime(balance_df["date"])
+
+# Find the closest available date if the selected date has no data
+if selected_date not in prices_df["date"].values:
+    closest_date = prices_df["date"].max()  # Use the latest available date
+    st.write(f"⚠️ No data found for {selected_date}. Using latest available date: {closest_date}")
+    selected_date = closest_date
 
 # Merge datasets
 if not prices_df.empty and not income_df.empty and not balance_df.empty:
@@ -39,11 +50,12 @@ if not prices_df.empty and not income_df.empty and not balance_df.empty:
 
     # Make prediction
     if not X_latest.empty:
-        predicted_next_close = model.predict(X_latest)[0]
+        predicted_movement = model.predict(X_latest)[0]
+        prediction_label = "📈 Price Will Go UP" if predicted_movement == 1 else "📉 Price Will Go DOWN"
 
         # Display results
         st.subheader(f"📊 Prediction for AAPL on {selected_date}")
-        st.metric(label="📈 Predicted Next Close Price", value=f"${predicted_next_close:.2f}")
+        st.metric(label="Market Movement Prediction", value=prediction_label)
 
         # Show actual market data for reference
         st.write("📌 Latest Market Data:")
