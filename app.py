@@ -33,8 +33,11 @@ balance_df["date"] = pd.to_datetime(balance_df["date"])
 merged_df = prices_df.merge(income_df, on=["ticker", "date"], how="left")
 merged_df = merged_df.merge(balance_df, on=["ticker", "date"], how="left")
 
-# Sort by ticker and date (most recent to oldest)
-merged_df = merged_df.sort_values(by=["ticker", "date"], ascending=[True])
+# Check if 'ticker' exists before sorting
+if "ticker" in merged_df.columns:
+    merged_df = merged_df.sort_values(by=["ticker", "date"], ascending=[True, True])
+else:
+    merged_df = merged_df.sort_values(by=["date"], ascending=[True])
 
 # Forward-fill missing values for financial data
 merged_df.ffill(inplace=True)
