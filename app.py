@@ -29,42 +29,41 @@ prices_df["date"] = pd.to_datetime(prices_df["date"])
 income_df["date"] = pd.to_datetime(income_df["date"])
 balance_df["date"] = pd.to_datetime(balance_df["date"])
 
-# Forward-fill missing financial data to match daily stock prices
-income_df = income_df.sort_values("date").ffill()
-balance_df = balance_df.sort_values("date").ffill()
+# Merge datasets using a left join on ticker and date
+merged_df = prices_df.merge(income_df, on=["ticker", "date"], how="left")
+merged_df = merged_df.merge(balance_df, on=["ticker", "date"], how="left")
 
-# Find the closest available date if the selected date has no data
-if selected_date not in prices_df["date"].values:
-    closest_date = prices_df["date"].max()  # Use the latest available date
-    st.write(f"⚠️ No data found for {selected_date}. Using latest available date: {closest_date}")
-    selected_date = closest_date
+# Sort by ticker and date (most recent to oldest)
+merged_df = merged_df.sort_values(by=["ticker", "date"], ascending=[True])
 
-# Merge datasets
-if not prices_df.empty and not income_df.empty and not balance_df.empty:
-    latest_data = prices_df.merge(income_df, on=["date", "ticker"], how="left")
-    latest_data = latest_data.merge(balance_df, on=["date", "ticker"], how="left")
+# Forward-fill missing values for financial data
+merged_df.ffill(inplace=True)
 
-    # Feature engineering
-    latest_data["p_e_ratio"] = latest_data["close"] / (latest_data["net_income"] / latest_data["share_capital"])
-    latest_data["sma_50"] = latest_data["close"].rolling(window=50, min_periods=1).mean()
+# Compute P/E ratio (Price-to-Earnings Ratio)
+merged_df["earnings_per_share"] = merged_df["net_income"] / merged_df["share_capital"]
+merged_df["p_e_ratio"] = merged_df["close"] / merged_df["earnings_per_share"]
 
-    # Select required features
-    features = ["close", "p_e_ratio", "sma_50"]
-    X_latest = latest_data[features].dropna()
+# Compute 50-day Simple Moving Average (SMA)
+merged_df["sma_50"] = merged_df.groupby("ticker")["close"].transform(lambda x: x.rolling(window=50, min_periods=1).mean())
+
+# Select required features
+features = ["close", "p_e_ratio", "sma_50"]
+latest_data = merged_df[merged_df["date"] == selected_date]
+
+# Ensure valid data is available
+if not latest_data.empty and all(col in latest_data.columns for col in features):
+    X_latest = latest_data[features]
 
     # Make prediction
-    if not X_latest.empty:
-        predicted_movement = model.predict(X_latest)[0]
-        prediction_label = "📈 Price Will Go UP" if predicted_movement == 1 else "📉 Price Will Go DOWN"
+    predicted_movement = model.predict(X_latest)[0]
+    prediction_label = "📈 Price Will Go UP" if predicted_movement == 1 else "📉 Price Will Go DOWN"
 
-        # Display results
-        st.subheader(f"📊 Prediction for AAPL on {selected_date}")
-        st.metric(label="Market Movement Prediction", value=prediction_label)
+    # Display results
+    st.subheader(f"📊 Prediction for AAPL on {selected_date}")
+    st.metric(label="Market Movement Prediction", value=prediction_label)
 
-        # Show actual market data for reference
-        st.write("📌 Latest Market Data:")
-        st.dataframe(latest_data[["date", "close", "p_e_ratio", "sma_50"]])
-    else:
-        st.warning("⚠️ Not enough data available for prediction.")
+    # Show actual market data for reference
+    st.write("📌 Latest Market Data:")
+    st.dataframe(latest_data[["date", "close", "p_e_ratio", "sma_50"]])
 else:
     st.warning("⚠️ No valid data found for the selected date.")
