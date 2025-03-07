@@ -2,4 +2,5 @@ streamlit
 pandas
 xgboost
 requests
-numpy 
+scikit-learn
+numpy  # (if needed)
