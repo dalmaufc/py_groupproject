@@ -4,7 +4,7 @@ import xgboost as xgb
 from simfin_api import SimFinAPI  # Import your API wrapper
 
 # Initialize SimFin API
-api = SimFinAPI(api_key="YOUR_SIMFIN_API_KEY")  # Replace with your actual key
+api = SimFinAPI(api_key="b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c")  # Replace with your actual key
 
 # Load the trained XGBoost classification model
 model = xgb.XGBClassifier()
