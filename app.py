@@ -15,7 +15,7 @@ api = SimFinAPI(api_key="b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c")
 # Define parameters
 ticker = "AAPL"
 start_date = "2024-01-01"
-end_date = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")  # Always set to yesterday
+end_date = "2025-03-06"
 
 # Fetch stock price data
 print("\n🔍 Testing Share Prices API...")
@@ -63,3 +63,4 @@ merged_df = merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"])
 # Display the dataset for verification
 st.write("📌 Processed Dataset Preview:")
 st.dataframe(merged_df.head(20))
+
