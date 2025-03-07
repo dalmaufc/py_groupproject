@@ -62,6 +62,13 @@ merged_df = merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"])
 
 # Display the dataset for verification
 st.write("📌 Processed Dataset Preview:")
-st.dataframe(merged_df.tail(294))
+st.dataframe(merged_df.tail(20))
 
+# Create a second dataframe with only yesterday's data and selected columns
+yesterday_date = pd.to_datetime(end_date)
+yesterday_df = merged_df[merged_df["date"] == yesterday_date][["close", "p_e_ratio", "sma_50"]]
+
+# Display yesterday's data
+st.write("📌 Data for Yesterday:")
+st.dataframe(yesterday_df)
 
