@@ -62,5 +62,5 @@ merged_df = merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"])
 
 # Display the dataset for verification
 st.write("📌 Processed Dataset Preview:")
-st.dataframe(merged_df.head(20))
+st.dataframe(merged_df.head(365))
 
