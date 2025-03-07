@@ -50,3 +50,19 @@ merged_df["sma_50"] = merged_df.groupby("ticker")["close"].transform(lambda x: x
 # Display the dataset for verification
 st.write("📌 Processed Dataset Preview:")
 st.dataframe(merged_df.head(20))
+
+
+st.write(f"📊 Stock Prices Data: {prices_df.shape}")
+st.write(f"📊 Income Statement Data: {income_df.shape}")
+st.write(f"📊 Balance Sheet Data: {balance_df.shape}")
+
+
+
+
+st.write(f"📊 Merged Dataset Shape: {merged_df.shape}")
+st.write("📆 Available Dates in Merged Data:", merged_df["date"].dropna().unique())
+
+
+
+st.write(f"📊 Earliest Date: {merged_df['date'].min()}")
+st.write(f"📊 Latest Date: {merged_df['date'].max()}")
