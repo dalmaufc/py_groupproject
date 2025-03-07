@@ -29,6 +29,10 @@ prices_df["date"] = pd.to_datetime(prices_df["date"])
 income_df["date"] = pd.to_datetime(income_df["date"])
 balance_df["date"] = pd.to_datetime(balance_df["date"])
 
+# Forward-fill missing financial data to match daily stock prices
+income_df = income_df.sort_values("date").ffill()
+balance_df = balance_df.sort_values("date").ffill()
+
 # Find the closest available date if the selected date has no data
 if selected_date not in prices_df["date"].values:
     closest_date = prices_df["date"].max()  # Use the latest available date
