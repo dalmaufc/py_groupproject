@@ -33,14 +33,14 @@ balance_df["date"] = pd.to_datetime(balance_df["date"])
 merged_df = prices_df.merge(income_df, on=["ticker", "date"], how="left")
 merged_df = merged_df.merge(balance_df, on=["ticker", "date"], how="left")
 
-# Check if 'ticker' exists before sorting
+# Ensure ticker column exists before sorting
 if "ticker" in merged_df.columns:
     merged_df = merged_df.sort_values(by=["ticker", "date"], ascending=[True, True])
 else:
     merged_df = merged_df.sort_values(by=["date"], ascending=[True])
 
 # Forward-fill missing values for financial data
-merged_df.ffill(inplace=True)
+merged_df = merged_df.ffill()
 
 # Compute P/E ratio (Price-to-Earnings Ratio)
 merged_df["earnings_per_share"] = merged_df["net_income"] / merged_df["share_capital"]
