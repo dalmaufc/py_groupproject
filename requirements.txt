@@ -4,3 +4,4 @@ xgboost
 requests
 scikit-learn
 numpy  # (if needed)
+matplotlib
