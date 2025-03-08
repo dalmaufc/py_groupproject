@@ -33,23 +33,28 @@ share_prices_df = api.get_share_prices(selected_stock, start_date, end_date)
 # Fetch financial data
 income_df = api.get_income_statement(selected_stock, start_date, end_date)
 balance_sheet_df = api.get_balance_sheet(selected_stock, start_date, end_date)
+shares_outstanding_df = api.get_shares_outstanding(ticker, start_date, end_date)
 
 # Convert date columns to datetime format
 share_prices_df["date"] = pd.to_datetime(share_prices_df["date"])
 income_df["date"] = pd.to_datetime(income_df["date"])
 balance_sheet_df["date"] = pd.to_datetime(balance_sheet_df["date"])
+shares_outstanding_df["date"] = pd.to_datetime(shares_outstanding_df["date"])
+
 
 # Merge datasets
 merged_df = share_prices_df.merge(income_df, on=["ticker", "date"], how="left")
 merged_df = merged_df.merge(balance_sheet_df, on=["ticker", "date"], how="left")
+merged_df = merged_df.merge(shares_outstanding_df, on=["ticker", "date"], how="left")
+
 
 # Sort and forward-fill missing values
 merged_df = merged_df.sort_values(by=["ticker", "date"], ascending=[True, True])
 merged_df.ffill(inplace=True)
 
 # Compute P/E ratio
-merged_df["earnings_per_share"] = merged_df["net_income"] / merged_df["share_capital"]
-merged_df["p_e_ratio"] = merged_df["close"] / merged_df["earnings_per_share"]
+merged_df["market_capitalization"] = merged_df["close"] * merged_df["shares_outstanding"]
+merged_df["p_e_ratio"] = merged_df["market_capitalization"] / merged_df["net_income"]
 
 # Compute 50-day SMA
 merged_df["sma_50"] = merged_df.groupby("ticker")["close"].transform(lambda x: x.rolling(window=50, min_periods=1).mean())

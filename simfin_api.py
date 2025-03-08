@@ -151,3 +151,27 @@ class SimFinAPI:
 
         df = pd.DataFrame(processed_data).dropna()
         return df.sort_values(by="date", ascending=True)
+    
+    
+
+    def get_shares_outstanding(self, ticker, start_date, end_date):
+        """Fetches common shares outstanding for a ticker."""
+        url = f"{self.base_url}companies/common-shares-outstanding"
+        params = {
+            "ticker": ticker.upper(),
+            "start": start_date,
+            "end": end_date
+        }
+        data = self._make_request(url, params)
+
+        if not data or not isinstance(data, list) or len(data) == 0:
+            print(f"No shares outstanding data for {ticker} between {start_date} and {end_date}")
+            return pd.DataFrame(columns=['date', 'ticker', 'shares_outstanding'])
+
+        processed_data = [
+            {"date": pd.to_datetime(entry["endDate"]), "ticker": ticker.upper(), "shares_outstanding": entry["value"]}
+            for entry in data
+        ]
+
+        df = pd.DataFrame(processed_data).dropna()
+        return df.sort_values(by="date", ascending=True)

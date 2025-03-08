@@ -24,3 +24,8 @@ print(income_df.head())
 print("🔍 Testing Balance Sheet API...")
 balance_df = api.get_balance_sheet(ticker, start_date, end_date)
 print(balance_df.head())
+
+# Save results for further inspection
+print("🔍 Testing Shares Outstanding API...")
+shares_outstanding_df = api.get_shares_outstanding(ticker, start_date, end_date)
+print(shares_outstanding_df.head())
