@@ -33,7 +33,7 @@ share_prices_df = api.get_share_prices(selected_stock, start_date, end_date)
 # Fetch financial data
 income_df = api.get_income_statement(selected_stock, start_date, end_date)
 balance_sheet_df = api.get_balance_sheet(selected_stock, start_date, end_date)
-shares_outstanding_df = api.get_shares_outstanding(ticker, start_date, end_date)
+shares_outstanding_df = api.get_shares_outstanding(selected_stock, start_date, end_date)
 
 # Convert date columns to datetime format
 share_prices_df["date"] = pd.to_datetime(share_prices_df["date"])
