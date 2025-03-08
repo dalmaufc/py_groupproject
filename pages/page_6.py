@@ -59,6 +59,9 @@ merged_df["next_close"] = merged_df.groupby("ticker")["close"].shift(-1)
 # Drop rows where critical features contain NaN values
 merged_df = merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"])
 
+if not merged_df.empty:
+    st.dataframe(merged_df)
+
 # Create a second DataFrame for yesterday's data
 yesterday_date = pd.to_datetime(end_date)
 yesterday_df = merged_df[merged_df["date"] == yesterday_date][["ticker", "close", "p_e_ratio", "sma_50"]]
