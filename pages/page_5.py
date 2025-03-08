@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import xgboost as xgb
+import matplotlib.pyplot as plt
 from simfin_api import SimFinAPI  # Import your API wrapper
 from datetime import datetime, timedelta
 import os
