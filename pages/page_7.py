@@ -65,7 +65,6 @@ merged_df["next_close"] = merged_df.groupby("ticker")["close"].shift(-1)
 # Drop rows where critical features contain NaN values
 merged_df = merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"])
 
-merged_df = merged_df.drop("fiscal_period")
 
 if not merged_df.empty:
     st.dataframe(merged_df)
