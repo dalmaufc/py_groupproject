@@ -10,7 +10,7 @@ api = SimFinAPI(api_key="b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c")
 
 # Define parameters
 stocks = ['AAPL']
-start_date = "2024-01-01"
+start_date = (datetime.today() - timedelta(days=365)).strftime("%Y-%m-%d")  # Set start date to one year ago
 end_date = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")  # Always set to yesterday
 
 # Load the trained XGBoost model
@@ -59,9 +59,6 @@ merged_df["next_close"] = merged_df.groupby("ticker")["close"].shift(-1)
 # Drop rows where critical features contain NaN values
 merged_df = merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"])
 
-if not merged_df.empty:
-    st.dataframe(merged_df)
-
 # Create a second DataFrame for yesterday's data
 yesterday_date = pd.to_datetime(end_date)
 yesterday_df = merged_df[merged_df["date"] == yesterday_date][["ticker", "close", "p_e_ratio", "sma_50"]]
@@ -82,3 +79,13 @@ if not yesterday_df.empty:
     st.write(f"🔮 The model predicts: **{prediction_label}**")
 else:
     st.warning("⚠️ No data available for yesterday.")
+
+# Plot Closing Price Trend
+st.subheader(f"📈 Closing Price Trend for {selected_stock} (Last Year)")
+plt.figure(figsize=(10, 5))
+plt.plot(merged_df["date"], merged_df["close"], label="Closing Price", color="blue")
+plt.xlabel("Date")
+plt.ylabel("Closing Price (USD)")
+plt.title(f"{selected_stock} Closing Price Over the Last Year")
+plt.legend()
+st.pyplot(plt)
