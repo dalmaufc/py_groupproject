@@ -60,26 +60,26 @@ merged_df["next_close"] = merged_df.groupby("ticker")["close"].shift(-1)
 # Drop rows where critical features contain NaN values
 merged_df = merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"])
 
-# Find the most recent available trading day
-latest_date = merged_df["date"].max()
-latest_df = merged_df[merged_df["date"] == latest_date][["ticker", "close", "p_e_ratio", "sma_50"]]
+# Create a second DataFrame for yesterday's data
+yesterday_date = pd.to_datetime(end_date)
+yesterday_df = merged_df[merged_df["date"] == yesterday_date][["ticker", "close", "p_e_ratio", "sma_50"]]
 
-if not latest_df.empty:
+if not yesterday_df.empty:
     # Make a prediction using the model
-    dmatrix = xgb.DMatrix(latest_df[["close", "p_e_ratio", "sma_50"]])
+    dmatrix = xgb.DMatrix(yesterday_df[["close", "p_e_ratio", "sma_50"]])
     prediction = model.predict(dmatrix)[0]
     
     # Determine if the price is expected to go up or down
     prediction_label = "📈 Up" if prediction > 0.5 else "📉 Down"
-    latest_df["Prediction"] = prediction_label
+    yesterday_df["Prediction"] = prediction_label
     
     # Display results
-    st.write(f"📊 Data for Most Recent Trading Day ({latest_date.date()}):")
-    st.dataframe(latest_df)
-    st.subheader("📊 Prediction for Next Close Price Movement")
+    st.write("📊 Data for Yesterday:")
+    st.dataframe(yesterday_df)
+    st.subheader("📊 Prediction for Today's Close Price Movement")
     st.write(f"🔮 The model predicts: **{prediction_label}**")
 else:
-    st.warning("⚠️ No available stock data for predictions.")
+    st.warning("⚠️ No data available for yesterday.")
 
 # Plot Closing Price Trend
 st.subheader(f"📈 Closing Price Trend for {selected_stock} (Last Year)")
