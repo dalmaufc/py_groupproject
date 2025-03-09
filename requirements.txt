@@ -9,3 +9,4 @@ python-dotenv
 simfin_api
 datetime
 simfin
+dotenv
