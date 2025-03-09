@@ -7,4 +7,4 @@ numpy  # (if needed)
 matplotlib
 datetime
 # simfin_api
-# dotenv
+python-dotenv
