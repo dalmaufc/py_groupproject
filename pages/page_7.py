@@ -19,7 +19,18 @@ api = SimFinAPI(api_key=api_key)
 # Define parameters
 stocks = ['TSLA']
 start_date = (datetime.today() - timedelta(days=365)).strftime("%Y-%m-%d")  # Set start date to one year ago
-end_date = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")  # Always set to yesterday
+# Get today's date and determine the stock market's last available trading day
+today = datetime.today()
+weekday = today.weekday()  # Monday = 0, Sunday = 6
+
+
+# Adjust end_date based on the weekday
+if weekday == 0:  # Today is Monday → Use last Friday's data
+    end_date = (today - timedelta(days=3)).strftime("%Y-%m-%d")
+elif weekday == 6:  # Today is Sunday → Use last Friday's data
+    end_date = (today - timedelta(days=2)).strftime("%Y-%m-%d")
+else:  # Normal case: Use yesterday's data
+    end_date = (today - timedelta(days=1)).strftime("%Y-%m-%d")
 
 # Load the trained XGBoost model
 model = xgb.Booster()
