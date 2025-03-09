@@ -8,3 +8,4 @@ matplotlib
 python-dotenv
 simfin_api
 datetime
+simfin
