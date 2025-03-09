@@ -5,14 +5,34 @@ import matplotlib.pyplot as plt
 from simfin_api import SimFinAPI  # Import your API wrapper
 from datetime import datetime, timedelta
 import os
+from dotenv import load_dotenv
 
-# Initialize SimFin API (Replace with your valid API key)
-api = SimFinAPI(api_key="b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c")
+# Load .env file
+load_dotenv('keys.env')
+
+# Retrieve API key securely
+api_key = os.getenv("SIMFIN_API_KEY")
+
+# Initialize SimFin API
+api = SimFinAPI(api_key=api_key)
+
 
 # Define parameters
 stocks = ['AAPL', 'MSFT', 'GOOG', 'AMZN', 'NVDA', 'META', 'TSLA']
 start_date = (datetime.today() - timedelta(days=365)).strftime("%Y-%m-%d")  # Set start date to one year ago
-end_date = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")  # Always set to yesterday
+
+# Get today's date and determine the stock market's last available trading day
+today = datetime.today()
+weekday = today.weekday()  # Monday = 0, Sunday = 6
+
+
+# Adjust end_date based on the weekday
+if weekday == 0:  # Today is Monday → Use last Friday's data
+    end_date = (today - timedelta(days=3)).strftime("%Y-%m-%d")
+elif weekday == 6:  # Today is Sunday → Use last Friday's data
+    end_date = (today - timedelta(days=2)).strftime("%Y-%m-%d")
+else:  # Normal case: Use yesterday's data
+    end_date = (today - timedelta(days=1)).strftime("%Y-%m-%d")
 
 # Load the trained XGBoost model
 model = xgb.Booster()
