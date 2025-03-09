@@ -5,9 +5,16 @@ import matplotlib.pyplot as plt
 from simfin_api import SimFinAPI  # Import your API wrapper
 from datetime import datetime, timedelta
 import os
+from dotenv import load_dotenv
 
-# Initialize SimFin API (Replace with your valid API key)
-api = SimFinAPI(api_key="b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c")
+# Load .env file
+load_dotenv('keys.env')
+
+# Retrieve API key securely
+api_key = os.getenv("SIMFIN_API_KEY")
+
+# Initialize SimFin API
+api = SimFinAPI(api_key=api_key)
 
 # Define parameters
 stocks = ['AMZN']
