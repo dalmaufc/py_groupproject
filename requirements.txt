@@ -5,8 +5,6 @@ requests
 scikit-learn
 numpy  # (if needed)
 matplotlib
-python-dotenv
-simfin_api
 datetime
-simfin
-dotenv
+# simfin_api
+# dotenv
