@@ -119,7 +119,7 @@ else:
 # Plot Closing Price Trend
 st.subheader(f"📈 Closing Price Trend for {selected_stock} (Last Year)")
 plt.figure(figsize=(10, 5))
-plt.plot(merged_df["date"], merged_df["close"], label="Closing Price", color="blue")
+plt.plot(share_prices_df["date"], share_prices_df["close"], label="Closing Price", color="blue")
 plt.xlabel("Date")
 plt.ylabel("Closing Price (USD)")
 plt.title(f"{selected_stock} Closing Price Over the Last Year")
