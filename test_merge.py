@@ -6,7 +6,7 @@ from simfin_api import SimFinAPI
 api = SimFinAPI(api_key="b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c")
 
 # Define parameters
-ticker = "AAPL"
+ticker = "GOOG"
 start_date = "2024-01-01"
 end_date = "2025-03-06"
 
