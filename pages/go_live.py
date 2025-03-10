@@ -64,8 +64,8 @@ merged_df = merged_df.sort_values(by=["ticker", "date"], ascending=[True, True])
 merged_df.ffill(inplace=True)
 
 # Compute P/E ratio
-merged_df["earnings_per_share"] = merged_df["net_income"] / merged_df["share_capital"]
-merged_df["p_e_ratio"] = merged_df["close"] / merged_df["earnings_per_share"]
+merged_df["market_capitalization"] = merged_df["close"] * merged_df["shares_outstanding"]
+merged_df["p_e_ratio"] = merged_df["market_capitalization"] / merged_df["net_income"]
 
 # Compute 50-day SMA
 merged_df["sma_50"] = merged_df.groupby("ticker")["close"].transform(lambda x: x.rolling(window=50, min_periods=1).mean())
