@@ -50,14 +50,21 @@ except Exception as e:
     st.error(f"❌ Error fetching data: {e}")
     st.stop()
 
+shares_outstanding_df = api.get_shares_outstanding(selected_stock, start_date, end_date)
+
+
 # Convert date columns to datetime format
 share_prices_df["date"] = pd.to_datetime(share_prices_df["date"])
 income_df["date"] = pd.to_datetime(income_df["date"])
 balance_sheet_df["date"] = pd.to_datetime(balance_sheet_df["date"])
+shares_outstanding_df["date"] = pd.to_datetime(shares_outstanding_df["date"])
+
 
 # Merge datasets
 merged_df = share_prices_df.merge(income_df, on=["ticker", "date"], how="left")
 merged_df = merged_df.merge(balance_sheet_df, on=["ticker", "date"], how="left")
+merged_df = merged_df.merge(shares_outstanding_df, on=["ticker", "date"], how="left")
+
 
 # Sort and forward-fill missing values
 merged_df = merged_df.sort_values(by=["ticker", "date"], ascending=[True, True])
