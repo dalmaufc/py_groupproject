@@ -6,9 +6,8 @@ import time
 class SimFinAPI:
     """
     A simple API wrapper for SimFin v3, handling share prices, income statements, and balance sheets.
-    Replace 'b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c' with your actual API key.
     """
-    def __init__(self, api_key="b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c"):
+    def __init__(self, api_key):
         self.api_key = api_key
         self.base_url = "https://backend.simfin.com/api/v3/"
         self.headers = {
