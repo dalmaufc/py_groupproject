@@ -141,4 +141,3 @@ plt.ylabel("Closing Price (USD)")
 plt.title(f"{selected_stock} Closing Price Over the Last Year")
 plt.legend()
 st.pyplot(plt)
-
