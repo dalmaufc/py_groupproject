@@ -6,6 +6,9 @@ from simfin_api import SimFinAPI
 from datetime import datetime, timedelta
 import os
 
+# ✅ Set the Streamlit page configuration first!
+st.set_page_config(page_title="Stock Market Live Analysis", layout="wide")
+
 # Streamlit API Key Input
 st.sidebar.header("🔑 Enter your SimFin API Key")
 api_key = st.sidebar.text_input("API Key", type="password")
@@ -17,15 +20,10 @@ elif "SIMFIN_API_KEY" in st.session_state:
     api_key = st.session_state["SIMFIN_API_KEY"]
 else:
     st.warning("⚠️ Please enter your SimFin API key to fetch stock data.")
-
-# Initialize SimFin API only if an API key is provided
-if api_key:
-    api = SimFinAPI(api_key=api_key)
-else:
     st.stop()  # Stop execution until user provides the API key
 
-# Configure the page layout
-st.set_page_config(page_title="Stock Market Live Analysis", layout="wide")
+# Initialize SimFin API
+api = SimFinAPI(api_key=api_key)
 
 # Sidebar stock selection
 st.sidebar.title("📊 Select a Stock")
@@ -128,3 +126,4 @@ plt.ylabel("Closing Price (USD)")
 plt.title(f"{selected_stock} Closing Price Over the Last Year")
 plt.legend()
 st.pyplot(plt)
+
