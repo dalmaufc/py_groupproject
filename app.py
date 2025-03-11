@@ -14,7 +14,8 @@ GITHUB_LOGO_URL = "https://raw.githubusercontent.com/your-username/your-repo/mai
 
 # ✅ Map stock tickers to logo filenames
 stock_logos = {
-    "AAPL": f"{GITHUB_LOGO_URL}AAPL.png",
+    "AAPL": f"{https://raw.githubusercontent.com/your-username/your-repo/main/logos/AAPL.png
+}AAPL.png",
     "MSFT": f"{GITHUB_LOGO_URL}MSFT.png",
     "GOOG": f"{GITHUB_LOGO_URL}GOOG.png",
     "AMZN": f"{GITHUB_LOGO_URL}AMZN.png",
