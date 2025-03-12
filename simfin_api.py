@@ -1,10 +1,6 @@
 import requests
 import pandas as pd
 import time
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class SimFinAPI:
     """
@@ -24,126 +20,102 @@ class SimFinAPI:
         time.sleep(self.rate_limit)
 
     def _make_request(self, url, params=None):
-        """Handles API requests with rate limiting, error handling, and logging."""
+        """Handles API requests with rate limiting and improved error handling."""
         self._respect_rate_limit()
         try:
             response = requests.get(url, headers=self.headers, params=params)
             response.raise_for_status()
-            return response.json()
-        except requests.exceptions.HTTPError as e:
-            logging.error(f"HTTP Error {response.status_code}: {response.text}")
-        except requests.exceptions.ConnectionError:
-            logging.error("Error: Network problem (e.g., DNS failure, refused connection). Check your connection.")
-        except requests.exceptions.Timeout:
-            logging.error("Error: Request timed out. Consider retrying later.")
+            try:
+                return response.json()  # Return raw JSON if valid
+            except ValueError:
+                print("Error: Unable to parse JSON response.")
+                return []
         except requests.exceptions.RequestException as e:
-            logging.error(f"Request error: {e}")
-        return []
+            print(f"Request error: {e}")
+            return []
     
+    def _validate_response(self, data, required_keys):
+        """Checks if the API response is valid and contains expected keys."""
+        if not data or not isinstance(data, list) or len(data) == 0:
+            return False
+        if not all(key in data[0] for key in required_keys):
+            print("Error: Unexpected API response format.")
+            return False
+        return True
+
     def get_share_prices(self, ticker, start_date, end_date):
         """Fetches daily share prices for a ticker using the v3 API."""
         url = f"{self.base_url}companies/prices/compact"
         params = {"ticker": ticker.upper(), "start": start_date, "end": end_date}
         data = self._make_request(url, params)
 
-        if not data:
-            logging.warning(f"No price data for {ticker} between {start_date} and {end_date}")
+        if not self._validate_response(data, ["columns", "data"]):
             return pd.DataFrame(columns=['date', 'ticker', 'close'])
 
-        columns = data[0].get("columns", [])
         try:
+            columns = data[0]["columns"]
             date_idx = columns.index("Date")
             close_idx = columns.index("Last Closing Price")
-        except ValueError:
-            logging.error("Error: Expected columns not found in API response.")
+
+            processed_data = [
+                {"date": pd.to_datetime(row[date_idx]), "ticker": ticker.upper(), "close": row[close_idx]}
+                for row in data[0]["data"] if len(row) > close_idx
+            ]
+            return pd.DataFrame(processed_data).dropna().sort_values(by="date", ascending=True)
+        except (ValueError, IndexError, KeyError):
+            print("Error: Unable to extract expected share price data.")
             return pd.DataFrame(columns=['date', 'ticker', 'close'])
 
-        processed_data = [
-            {"date": pd.to_datetime(row[date_idx]), "ticker": ticker.upper(), "close": row[close_idx]}
-            for row in data[0].get("data", []) if len(row) > close_idx
-        ]
-
-        df = pd.DataFrame(processed_data).dropna()
-        return df.sort_values(by="date", ascending=True)
-    
     def get_income_statement(self, ticker, start_date, end_date):
         """Fetches the income statement data for a ticker."""
         url = f"{self.base_url}companies/statements/compact"
         params = {"ticker": ticker.upper(), "statements": "PL", "period": "Q1,Q2,Q3,Q4", "start": start_date, "end": end_date}
         data = self._make_request(url, params)
 
-        if not data:
-            logging.warning(f"No income data for {ticker} between {start_date} and {end_date}")
+        if not self._validate_response(data, ["statements"]):
             return pd.DataFrame(columns=['ticker', 'date', 'fiscal_period', 'fiscal_year', 'revenue', 'net_income'])
-        
-        statements = data[0].get("statements", [])
-        if not statements:
-            logging.warning("No statement data found in API response.")
-            return pd.DataFrame(columns=['ticker', 'date', 'fiscal_period', 'fiscal_year', 'revenue', 'net_income'])
-        
-        pl_statement = statements[0]
-        columns = pl_statement.get("columns", [])
+
         try:
+            pl_statement = data[0]["statements"][0]
+            columns = pl_statement["columns"]
             fiscal_period_idx = columns.index("Fiscal Period")
             fiscal_year_idx = columns.index("Fiscal Year")
             report_date_idx = columns.index("Report Date")
             revenue_idx = columns.index("Revenue")
             net_income_idx = columns.index("Net Income")
-        except ValueError:
-            logging.error("Error: Expected columns not found in API response.")
+
+            processed_data = [
+                {
+                    "ticker": ticker.upper(),
+                    "date": pd.to_datetime(row[report_date_idx], errors='coerce'),
+                    "fiscal_period": row[fiscal_period_idx],
+                    "fiscal_year": row[fiscal_year_idx],
+                    "revenue": pd.to_numeric(row[revenue_idx], errors='coerce'),
+                    "net_income": pd.to_numeric(row[net_income_idx], errors='coerce')
+                }
+                for row in pl_statement["data"] if len(row) > max(report_date_idx, revenue_idx, net_income_idx)
+            ]
+            return pd.DataFrame(processed_data).dropna().sort_values(by="date", ascending=True)
+        except (ValueError, IndexError, KeyError):
+            print("Error: Unable to extract expected income statement data.")
             return pd.DataFrame(columns=['ticker', 'date', 'fiscal_period', 'fiscal_year', 'revenue', 'net_income'])
 
-        processed_data = [
-            {
-                "ticker": ticker.upper(),
-                "date": pd.to_datetime(row[report_date_idx], errors='coerce'),
-                "fiscal_period": row[fiscal_period_idx],
-                "fiscal_year": row[fiscal_year_idx],
-                "revenue": pd.to_numeric(row[revenue_idx], errors='coerce'),
-                "net_income": pd.to_numeric(row[net_income_idx], errors='coerce')
-            }
-            for row in pl_statement.get("data", []) if len(row) > max(report_date_idx, revenue_idx, net_income_idx)
-        ]
-
-        df = pd.DataFrame(processed_data).dropna()
-        return df.sort_values(by="date", ascending=True)
-    
-    def get_balance_sheet(self, ticker, start_date, end_date):
-        """Fetches balance sheet data for a ticker."""
-        url = f"{self.base_url}companies/statements/compact"
-        params = {"ticker": ticker.upper(), "statements": "BS", "start": start_date, "end": end_date}
+    def get_shares_outstanding(self, ticker, start_date, end_date):
+        """Fetches common shares outstanding for a ticker."""
+        url = f"{self.base_url}companies/common-shares-outstanding"
+        params = {"ticker": ticker.upper(), "start": start_date, "end": end_date}
         data = self._make_request(url, params)
 
-        if not data:
-            logging.warning(f"No balance sheet data for {ticker} between {start_date} and {end_date}")
-            return pd.DataFrame(columns=['ticker', 'date', 'totalLiabilities', 'totalEquity', 'share_capital'])
-        
-        statements = data[0].get("statements", [])
-        if not statements:
-            logging.warning("No statement data found in API response.")
-            return pd.DataFrame(columns=['ticker', 'date', 'totalLiabilities', 'totalEquity', 'share_capital'])
-        
-        bs_statement = statements[0]
-        columns = bs_statement.get("columns", [])
+        if not data or not isinstance(data, list):
+            print(f"No shares outstanding data for {ticker} between {start_date} and {end_date}")
+            return pd.DataFrame(columns=['date', 'ticker', 'shares_outstanding'])
+
         try:
-            date_idx = columns.index("Report Date")
-            liabilities_idx = columns.index("Total Liabilities")
-            equity_idx = columns.index("Total Equity")
-            share_capital_idx = columns.index("Share Capital & Additional Paid-In Capital")
-        except ValueError:
-            logging.error("Error: Expected columns not found in API response.")
-            return pd.DataFrame(columns=['ticker', 'date', 'totalLiabilities', 'totalEquity', 'share_capital'])
-
-        processed_data = [
-            {
-                "date": pd.to_datetime(row[date_idx], errors='coerce'),
-                "ticker": ticker.upper(),
-                "totalLiabilities": pd.to_numeric(row[liabilities_idx], errors='coerce'),
-                "totalEquity": pd.to_numeric(row[equity_idx], errors='coerce'),
-                "share_capital": pd.to_numeric(row[share_capital_idx], errors='coerce')
-            }
-            for row in bs_statement.get("data", []) if len(row) > max(date_idx, liabilities_idx, equity_idx, share_capital_idx)
-        ]
-        df = pd.DataFrame(processed_data).dropna()
-        return df.sort_values(by="date", ascending=True)
-
+            processed_data = [
+                {"date": pd.to_datetime(entry["endDate"]), "ticker": ticker.upper(), "shares_outstanding": entry["value"]}
+                for entry in data if "endDate" in entry and "value" in entry
+            ]
+            return pd.DataFrame(processed_data).dropna().sort_values(by="date", ascending=True)
+        except (KeyError, TypeError):
+            print("Error: Unexpected format in shares outstanding data.")
+            return pd.DataFrame(columns=['date', 'ticker', 'shares_outstanding'])
