@@ -24,7 +24,7 @@ else:
     st.stop()  # Stop execution until user provides the API key
 
 # ✅ Initialize SimFin API
-api = SimFinAPI(api_key=api_key
+api = SimFinAPI(api_key=api_key)
 
 # Configure the page layout
 st.set_page_config(page_title="Stock Market Live Analysis", layout="wide")
