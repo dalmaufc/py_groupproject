@@ -26,138 +26,150 @@ class SimFinAPI:
         try:
             response = requests.get(url, headers=self.headers, params=params)
             response.raise_for_status()
-            data = response.json()
-            
-            # Ensure the response is in expected format
-            if not isinstance(data, list):
-                raise ValueError(f"Unexpected response format: {data}")
-
-            return data  # Return raw JSON
-
+            return response.json()  # Return raw JSON
         except requests.exceptions.HTTPError as e:
             print(f"HTTP Error {response.status_code}: {response.text}")
-        except requests.exceptions.ConnectionError:
-            print("Error: Connection issue. Please check your internet connection.")
-        except requests.exceptions.Timeout:
-            print("Error: Request timed out. Try again later.")
-        except requests.exceptions.RequestException as e:
-            print(f"Request Error: {e}")
-        except ValueError as e:
-            print(f"Data Format Error: {e}")
+            return []
         except Exception as e:
-            print(f"Unexpected Error: {e}")
-        
-        return []
-
-    def _extract_columns(self, data, expected_columns):
-        """Helper function to extract required column indices from API response."""
-        if not data or "columns" not in data[0]:
-            print("Error: Missing column information in API response.")
-            return {}
-
-        columns = data[0]["columns"]
-        try:
-            indices = {col: columns.index(col) for col in expected_columns}
-        except ValueError as e:
-            print(f"Error: Missing expected column in API response. {e}")
-            return {}
-
-        return indices
-
+            print(f"Request error: {e}")
+            return []
+    
     def get_share_prices(self, ticker, start_date, end_date):
         """Fetches daily share prices for a ticker using the v3 API."""
         url = f"{self.base_url}companies/prices/compact"
-        params = {"ticker": ticker.upper(), "start": start_date, "end": end_date}
+        params = {
+            "ticker": ticker.upper(),
+            "start": start_date,
+            "end": end_date
+        }
         data = self._make_request(url, params)
 
-        indices = self._extract_columns(data, ["Date", "Last Closing Price"])
-        if not indices:
+        if not data or not isinstance(data, list) or len(data) == 0:
+            print(f"No price data for {ticker} between {start_date} and {end_date}")
+            return pd.DataFrame(columns=['date', 'ticker', 'close'])
+
+        columns = data[0].get("columns", [])
+        try:
+            date_idx = columns.index("Date")
+            close_idx = columns.index("Last Closing Price")
+        except ValueError:
+            print("Error: Expected columns not found in API response.")
             return pd.DataFrame(columns=['date', 'ticker', 'close'])
 
         processed_data = [
-            {
-                "date": pd.to_datetime(row[indices["Date"]], errors='coerce'),
-                "ticker": ticker.upper(),
-                "close": pd.to_numeric(row[indices["Last Closing Price"]], errors='coerce')
-            }
-            for row in data[0].get("data", []) if len(row) > max(indices.values())
+            {"date": pd.to_datetime(row[date_idx]), "ticker": ticker.upper(), "close": row[close_idx]}
+            for row in data[0].get("data", []) if len(row) > close_idx
         ]
 
         df = pd.DataFrame(processed_data).dropna()
         return df.sort_values(by="date", ascending=True)
-
+    
     def get_income_statement(self, ticker, start_date, end_date):
         """Fetches the income statement data for a ticker."""
         url = f"{self.base_url}companies/statements/compact"
-        params = {"ticker": ticker.upper(), "statements": "PL", "period": "Q1,Q2,Q3,Q4", "start": start_date, "end": end_date}
+        params = {
+            "ticker": ticker.upper(),
+            "statements": "PL",
+            "period": "Q1,Q2,Q3,Q4",  # Quarterly statements
+            "start": start_date,
+            "end": end_date
+        }
         data = self._make_request(url, params)
 
-        if not data or "statements" not in data[0] or not data[0]["statements"]:
+        if not data or not isinstance(data, list) or len(data) == 0:
             print(f"No income data for {ticker} between {start_date} and {end_date}")
             return pd.DataFrame(columns=['ticker', 'date', 'fiscal_period', 'fiscal_year', 'revenue', 'net_income'])
 
-        statements = data[0]["statements"][0]
-        indices = self._extract_columns([statements], ["Fiscal Period", "Fiscal Year", "Report Date", "Revenue", "Net Income"])
-        if not indices:
+        statements = data[0].get("statements", [])
+        pl_statement = statements[0] if statements else {}
+
+        columns = pl_statement.get("columns", [])
+        try:
+            fiscal_period_idx = columns.index("Fiscal Period")
+            fiscal_year_idx = columns.index("Fiscal Year")
+            report_date_idx = columns.index("Report Date")
+            revenue_idx = columns.index("Revenue")
+            net_income_idx = columns.index("Net Income")
+        except ValueError:
+            print("Error: Expected columns not found in API response.")
             return pd.DataFrame(columns=['ticker', 'date', 'fiscal_period', 'fiscal_year', 'revenue', 'net_income'])
 
         processed_data = [
             {
                 "ticker": ticker.upper(),
-                "date": pd.to_datetime(row[indices["Report Date"]], errors='coerce'),
-                "fiscal_period": row[indices["Fiscal Period"]],
-                "fiscal_year": row[indices["Fiscal Year"]],
-                "revenue": pd.to_numeric(row[indices["Revenue"]], errors='coerce'),
-                "net_income": pd.to_numeric(row[indices["Net Income"]], errors='coerce')
+                "date": pd.to_datetime(row[report_date_idx], errors='coerce'),
+                "fiscal_period": row[fiscal_period_idx],
+                "fiscal_year": row[fiscal_year_idx],
+                "revenue": pd.to_numeric(row[revenue_idx], errors='coerce'),
+                "net_income": pd.to_numeric(row[net_income_idx], errors='coerce')
             }
-            for row in statements.get("data", []) if len(row) > max(indices.values())
+            for row in pl_statement.get("data", []) if len(row) > max(report_date_idx, revenue_idx, net_income_idx)
         ]
 
         df = pd.DataFrame(processed_data).dropna()
         return df.sort_values(by="date", ascending=True)
-
+    
     def get_balance_sheet(self, ticker, start_date, end_date):
         """Fetches balance sheet data for a ticker."""
         url = f"{self.base_url}companies/statements/compact"
-        params = {"ticker": ticker.upper(), "statements": "BS", "start": start_date, "end": end_date}
+        params = {
+            "ticker": ticker.upper(),
+            "statements": "BS",
+            "start": start_date,
+            "end": end_date
+        }
         data = self._make_request(url, params)
 
-        if not data or "statements" not in data[0] or not data[0]["statements"]:
+        if not data or not isinstance(data, list) or len(data) == 0:
             print(f"No balance sheet data for {ticker} between {start_date} and {end_date}")
             return pd.DataFrame(columns=['ticker', 'date', 'totalLiabilities', 'totalEquity', 'share_capital'])
 
-        statements = data[0]["statements"][0]
-        indices = self._extract_columns([statements], ["Report Date", "Total Liabilities", "Total Equity", "Share Capital & Additional Paid-In Capital"])
-        if not indices:
+        statements = data[0].get("statements", [])
+        bs_statement = statements[0] if statements else {}
+
+        columns = bs_statement.get("columns", [])
+        try:
+            date_idx = columns.index("Report Date")
+            liabilities_idx = columns.index("Total Liabilities")
+            equity_idx = columns.index("Total Equity")
+            share_capital_idx = columns.index("Share Capital & Additional Paid-In Capital")
+        except ValueError:
+            print("Error: Expected columns not found in API response.")
             return pd.DataFrame(columns=['ticker', 'date', 'totalLiabilities', 'totalEquity', 'share_capital'])
 
         processed_data = [
             {
-                "date": pd.to_datetime(row[indices["Report Date"]], errors='coerce'),
+                "date": pd.to_datetime(row[date_idx], errors='coerce'),
                 "ticker": ticker.upper(),
-                "totalLiabilities": pd.to_numeric(row[indices["Total Liabilities"]], errors='coerce'),
-                "totalEquity": pd.to_numeric(row[indices["Total Equity"]], errors='coerce'),
-                "share_capital": pd.to_numeric(row[indices["Share Capital & Additional Paid-In Capital"]], errors='coerce')
+                "totalLiabilities": pd.to_numeric(row[liabilities_idx], errors='coerce'),
+                "totalEquity": pd.to_numeric(row[equity_idx], errors='coerce'),
+                "share_capital": pd.to_numeric(row[share_capital_idx], errors='coerce')
             }
-            for row in statements.get("data", []) if len(row) > max(indices.values())
+            for row in bs_statement.get("data", []) if len(row) > max(date_idx, liabilities_idx, equity_idx, share_capital_idx)
         ]
 
         df = pd.DataFrame(processed_data).dropna()
         return df.sort_values(by="date", ascending=True)
+    
+    
 
     def get_shares_outstanding(self, ticker, start_date, end_date):
         """Fetches common shares outstanding for a ticker."""
         url = f"{self.base_url}companies/common-shares-outstanding"
-        params = {"ticker": ticker.upper(), "start": start_date, "end": end_date}
+        params = {
+            "ticker": ticker.upper(),
+            "start": start_date,
+            "end": end_date
+        }
         data = self._make_request(url, params)
 
-        if not data or not isinstance(data, list):
+        if not data or not isinstance(data, list) or len(data) == 0:
             print(f"No shares outstanding data for {ticker} between {start_date} and {end_date}")
             return pd.DataFrame(columns=['date', 'ticker', 'shares_outstanding'])
 
         processed_data = [
-            {"date": pd.to_datetime(entry.get("endDate"), errors='coerce'), "ticker": ticker.upper(), "shares_outstanding": pd.to_numeric(entry.get("value"), errors='coerce')}
-            for entry in data if entry.get("endDate") and entry.get("value") is not None
+            {"date": pd.to_datetime(entry["endDate"]), "ticker": ticker.upper(), "shares_outstanding": entry["value"]}
+            for entry in data
         ]
 
         df = pd.DataFrame(processed_data).dropna()
