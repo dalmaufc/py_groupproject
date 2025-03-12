@@ -130,3 +130,14 @@ if not yesterday_df.empty:
         st.error(f"❌ Prediction error: {e}")
 else:
     st.warning("⚠️ No available stock data for predictions.")
+
+
+# ✅ Plot Closing Price Trend
+st.subheader(f"📈 Closing Price Trend for {selected_stock} (Last Year)")
+plt.figure(figsize=(10, 5))
+plt.plot(share_prices_df["date"], share_prices_df["close"], label="Closing Price", color="blue")
+plt.xlabel("Date")
+plt.ylabel("Closing Price (USD)")
+plt.title(f"{selected_stock} Closing Price Over the Last Year")
+plt.legend()
+st.pyplot(plt)
