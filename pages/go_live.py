@@ -57,65 +57,80 @@ except Exception as e:
     st.error(f"❌ Error fetching data: {e}")
     st.stop()
 
+# ✅ Ensure data is not empty
+if share_prices_df.empty or income_df.empty or balance_sheet_df.empty or shares_outstanding_df.empty:
+    st.error("❌ No stock data available. Please try another stock or check back later.")
+    st.stop()
+
 # ✅ Convert date columns to datetime format
-share_prices_df["date"] = pd.to_datetime(share_prices_df["date"])
-income_df["date"] = pd.to_datetime(income_df["date"])
-balance_sheet_df["date"] = pd.to_datetime(balance_sheet_df["date"])
-shares_outstanding_df["date"] = pd.to_datetime(shares_outstanding_df["date"])
+def convert_to_datetime(df, column):
+    try:
+        df[column] = pd.to_datetime(df[column])
+    except Exception as e:
+        st.warning(f"⚠️ Date conversion error: {e}")
+convert_to_datetime(share_prices_df, "date")
+convert_to_datetime(income_df, "date")
+convert_to_datetime(balance_sheet_df, "date")
+convert_to_datetime(shares_outstanding_df, "date")
 
 # ✅ Merge datasets
-merged_df = share_prices_df.merge(income_df, on=["ticker", "date"], how="left")
-merged_df = merged_df.merge(balance_sheet_df, on=["ticker", "date"], how="left")
-merged_df = merged_df.merge(shares_outstanding_df, on=["ticker", "date"], how="left")
+try:
+    merged_df = share_prices_df.merge(income_df, on=["ticker", "date"], how="left")
+    merged_df = merged_df.merge(balance_sheet_df, on=["ticker", "date"], how="left")
+    merged_df = merged_df.merge(shares_outstanding_df, on=["ticker", "date"], how="left")
+except Exception as e:
+    st.error(f"❌ Error merging data: {e}")
+    st.stop()
 
 # ✅ Sort and forward-fill missing values
 merged_df = merged_df.sort_values(by=["ticker", "date"], ascending=[True, True])
 merged_df.ffill(inplace=True)
 
 # ✅ Compute P/E ratio
-merged_df["market_capitalization"] = merged_df["close"] * merged_df["shares_outstanding"]
-merged_df["p_e_ratio"] = merged_df["market_capitalization"] / merged_df["net_income"]
-
-# ✅ Compute 50-day SMA
-merged_df["sma_50"] = merged_df.groupby("ticker")["close"].transform(lambda x: x.rolling(window=50, min_periods=1).mean())
+try:
+    merged_df["market_capitalization"] = merged_df["close"] * merged_df["shares_outstanding"]
+    merged_df["p_e_ratio"] = merged_df["market_capitalization"] / merged_df["net_income"]
+    merged_df["sma_50"] = merged_df.groupby("ticker")["close"].transform(lambda x: x.rolling(window=50, min_periods=1).mean())
+except KeyError as e:
+    st.error(f"❌ Missing necessary columns for calculations: {e}")
+    st.stop()
 
 # ✅ Add next day's close price as a target variable
 merged_df["next_close"] = merged_df.groupby("ticker")["close"].shift(-1)
 
-# ✅ Drop rows where critical features contain NaN values
-merged_df = merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"])
-
-# ✅ Drop the fiscal_period column if it exists
-if "fiscal_period" in merged_df.columns:
-    merged_df = merged_df.drop(columns=["fiscal_period"])
+# ✅ Drop rows with missing values in critical columns
+merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"], inplace=True)
 
 # ✅ Display stock data
 st.subheader(f"📊 Historical Data for {selected_stock}")
 st.dataframe(merged_df)
 
 # ✅ Load the trained XGBoost model
-model = xgb.Booster()
-model.load_model("mag7_final_model.json")
+try:
+    model = xgb.Booster()
+    model.load_model("mag7_final_model.json")
+except Exception as e:
+    st.error(f"❌ Error loading model: {e}")
+    st.stop()
 
 # ✅ Predict using yesterday's data
 yesterday_date = pd.to_datetime(end_date)
 yesterday_df = merged_df[merged_df["date"] == yesterday_date][["ticker", "close", "p_e_ratio", "sma_50"]]
 
 if not yesterday_df.empty:
-    # Make a prediction using the model
-    dmatrix = xgb.DMatrix(yesterday_df[["close", "p_e_ratio", "sma_50"]])
-    prediction = model.predict(dmatrix)[0]
-    
-    # Determine buy/sell signals
-    prediction_label = "📈 Buy" if prediction > 0.5 else "📉 Sell"
-    yesterday_df["Prediction"] = prediction_label
-    
-    # Display predictions
-    st.subheader("📊 Prediction for Today's Close Price Movement")
-    st.write(f"🔮 **{prediction_label}** signal for {selected_stock}")
-    st.dataframe(yesterday_df)
+    try:
+        dmatrix = xgb.DMatrix(yesterday_df[["close", "p_e_ratio", "sma_50"]])
+        prediction = model.predict(dmatrix)[0]
+        prediction_label = "📈 Buy" if prediction > 0.5 else "📉 Sell"
+        yesterday_df["Prediction"] = prediction_label
+        st.subheader("📊 Prediction for Today's Close Price Movement")
+        st.write(f"🔮 **{prediction_label}** signal for {selected_stock}")
+        st.dataframe(yesterday_df)
+    except Exception as e:
+        st.error(f"❌ Prediction error: {e}")
 else:
     st.warning("⚠️ No available stock data for predictions.")
+
 
 # ✅ Plot Closing Price Trend
 st.subheader(f"📈 Closing Price Trend for {selected_stock} (Last Year)")
