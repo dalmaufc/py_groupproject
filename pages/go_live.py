@@ -7,14 +7,24 @@ from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 
-# Load .env file
-load_dotenv('keys.env')
+# ✅ Set the Streamlit page configuration first!
+st.set_page_config(page_title="Stock Market Live Analysis", layout="wide")
 
-# Retrieve API key securely
-api_key = os.getenv("SIMFIN_API_KEY")
+# ✅ API Key input at the top of the sidebar
+st.sidebar.title("🔑 Enter your SimFin API Key")
+api_key = st.sidebar.text_input("API Key", type="password")
 
-# Initialize SimFin API
-api = SimFinAPI(api_key=api_key)
+# ✅ Store API key in session state
+if api_key:
+    st.session_state["SIMFIN_API_KEY"] = api_key
+elif "SIMFIN_API_KEY" in st.session_state:
+    api_key = st.session_state["SIMFIN_API_KEY"]
+else:
+    st.sidebar.warning("⚠️ Please enter your SimFin API key to proceed.")
+    st.stop()  # Stop execution until user provides the API key
+
+# ✅ Initialize SimFin API
+api = SimFinAPI(api_key=api_key
 
 # Configure the page layout
 st.set_page_config(page_title="Stock Market Live Analysis", layout="wide")
