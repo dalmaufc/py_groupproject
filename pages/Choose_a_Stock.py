@@ -168,10 +168,10 @@ if not yesterday_df.empty:
         prediction = model.predict(dmatrix)[0]
         prediction_label = "📈 Buy" if prediction > 0.5 else "📉 Sell"
         yesterday_df["Prediction"] = prediction_label
-        logging.info(f"Prediction generated: {prediction_label}")
+        logging.info(f"Prediction generated for next closing price: {prediction_label}")
         
         # Display predictions
-        st.subheader("📊 Prediction for Today's Close Price Movement")
+        st.subheader("📊 Prediction for Next Closing Price Movement")
         st.write(f"🔮 **{prediction_label}** signal for {selected_stock}")
         st.dataframe(yesterday_df)
     except Exception as e:
