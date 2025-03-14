@@ -121,10 +121,12 @@ merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"], inplace=True)
 if "fiscal_period" in merged_df.columns:
     merged_df = merged_df.drop(columns=["fiscal_period"])
 
+show_merged_df = merged_df
+
 # Display only the last 10 rows
 st.subheader(f"📊 API Live Data for {selected_stock} (Latest 10 Closing Data)")
-merged_df["date"] = merged_df["date"].dt.date  # Converts to date format
-st.dataframe(merged_df.set_index("date").tail(10))
+show_merged_df["date"] = show_merged_df["date"].dt.date  # Converts to date format
+st.dataframe(show_merged_df.set_index("date").tail(10))
 
 # Load the trained XGBoost model
 try:
