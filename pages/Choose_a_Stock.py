@@ -162,7 +162,7 @@ if not yesterday_df.empty:
     try:
         dmatrix = xgb.DMatrix(yesterday_df[["close", "p_e_ratio", "sma_50"]])
         prediction = model.predict(dmatrix)[0]
-        prediction_label = "📈 Buy" if prediction < 0.5 else "📉 Sell"
+        prediction_label = "📈 Buy" if prediction > 0.5 else "📉 Sell"
         yesterday_df["Prediction"] = prediction_label
         logging.info(f"Prediction generated: {prediction_label}")
         
