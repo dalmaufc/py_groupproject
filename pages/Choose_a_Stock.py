@@ -138,9 +138,15 @@ except Exception as e:
     st.error(f"❌ Error loading model: {e}")
     st.stop()
 
-# Predict using yesterday's data
-yesterday_date = pd.to_datetime(end_date).date()  # Convert to date format
-yesterday_df = merged_df[merged_df["date"].dt.date == yesterday_date][["ticker", "close", "p_e_ratio", "sma_50"]]
+# Convert 'date' column to datetime explicitly
+merged_df["date"] = pd.to_datetime(merged_df["date"])
+
+# Ensure yesterday's date is in correct format
+yesterday_date = pd.to_datetime(end_date).date()
+
+# Filter for yesterday's data
+yesterday_df = merged_df[merged_df["date"] == pd.to_datetime(yesterday_date)][["ticker", "close", "p_e_ratio", "sma_50"]]
+
 
 st.write(f"Debug: Checking data for {yesterday_date}")
 st.write(yesterday_df)  # This should show at least one row
