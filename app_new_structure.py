@@ -1,7 +1,7 @@
 import streamlit as st
 
-# Configure the page layout
-st.set_page_config(page_title="Trading System Overview", layout="wide")
+# Configure the page layout with the desired title
+st.set_page_config(page_title="How It Works", page_icon="📊", layout="wide")
 
 st.markdown("""# 📈 The Future of Trading: AI-Powered Market Forecasting  
 
@@ -47,4 +47,6 @@ Whether you’re a seasoned trader or a newcomer navigating the market’s volat
 Welcome to the future of investing.  
 
 🚀 *Explore the platform now and let AI guide your next move!*  
+""")
+
 """)
