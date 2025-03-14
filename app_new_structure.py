@@ -49,4 +49,3 @@ Welcome to the future of investing.
 🚀 *Explore the platform now and let AI guide your next move!*  
 """)
 
-""")
