@@ -1,5 +1,11 @@
 import streamlit as st
 
+# Rename the sidebar page title
+st.set_page_config(page_title="How It Works")
+
+# Manually set the display name in sidebar
+st.sidebar.title("How It Works")
+
 # Configure the page layout with the desired title
 st.set_page_config(page_title="How It Works", page_icon="📊", layout="wide")
 
