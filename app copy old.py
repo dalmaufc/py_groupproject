@@ -4,7 +4,6 @@ import xgboost as xgb
 import matplotlib.pyplot as plt
 from simfin_api import SimFinAPI
 from datetime import datetime, timedelta
-import os
 import logging
 
 # Set up logging
@@ -36,29 +35,19 @@ stocks = ['AAPL', 'MSFT', 'GOOG', 'AMZN', 'NVDA', 'META', 'TSLA']
 selected_stock = st.sidebar.radio("Choose a stock:", stocks)
 logging.info(f"Selected stock: {selected_stock}")
 
-# Dictionary mapping stocks to their logo file paths
-logo_paths = {
-    "AAPL": "/mnt/data/AAPL.png",
-    "MSFT": "/mnt/data/MSFT.png",
-    "GOOG": "/mnt/data/GOOG.png",
-    "AMZN": "/mnt/data/AMZN.png",
-    "NVDA": "/mnt/data/NVDA.png",
-    "META": "/mnt/data/META.png",
-    "TSLA": "/mnt/data/TSLA.png",
-}
+# **GitHub Repository Base URL for Logos**
+GITHUB_BASE_URL = "https://raw.githubusercontent.com/dalmaufc/py_groupproject/tree/logos"
 
-# Debugging: Check if file exists
-def check_file_exists(file_path):
-    return os.path.exists(file_path)
+# Construct the URL for the selected stock's logo
+logo_url = f"{GITHUB_BASE_URL}/{selected_stock}.png"
 
 # Display company logo instead of emoji
 col1, col2 = st.columns([1, 6])  # Layout columns for logo and title
 with col1:
-    logo_path = logo_paths.get(selected_stock, "")
-    if check_file_exists(logo_path):
-        st.image(logo_path, width=80)
-    else:
-        st.warning(f"⚠️ Logo not found for {selected_stock} at {logo_path}")
+    try:
+        st.image(logo_url, width=80)
+    except Exception as e:
+        st.warning(f"⚠️ Could not load logo for {selected_stock}")
 
 with col2:
     st.title(f"Live Trading - {selected_stock}")
