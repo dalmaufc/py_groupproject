@@ -14,7 +14,7 @@ class SimFinAPI:
             "accept": "application/json"
         }
         self.rate_limit = 0.5  # Respect SimFin's API rate limit (2 requests/sec)
-        self.github_base_url = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME/main/logos"
+        self.github_base_url = "https://raw.githubusercontent.com/dalmaufc/py_groupproject/main/logos"
 
     def _respect_rate_limit(self):
         """Ensures requests comply with SimFin's rate limits."""
