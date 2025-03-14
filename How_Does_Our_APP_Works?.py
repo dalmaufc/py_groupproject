@@ -1,7 +1,7 @@
 import streamlit as st
 
 # Configure the page layout with the desired title
-st.set_page_config(page_title="How It Works", page_icon="📊", layout="wide")
+st.set_page_config(page_title="AI-Powered Trading Signals", page_icon="📊", layout="wide")
 
 st.markdown("""# 📈 The Future of Trading: AI-Powered Market Forecasting  
 
