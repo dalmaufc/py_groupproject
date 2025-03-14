@@ -139,8 +139,8 @@ except Exception as e:
     st.stop()
 
 # Predict using yesterday's data
-yesterday_date = pd.to_datetime(end_date)
-yesterday_df = merged_df[merged_df["date"] == yesterday_date][["ticker", "close", "p_e_ratio", "sma_50"]]
+yesterday_date = pd.to_datetime(end_date).date()  # Convert to date format
+yesterday_df = merged_df[merged_df["date"].dt.date == yesterday_date][["ticker", "close", "p_e_ratio", "sma_50"]]
 
 st.write(f"Debug: Checking data for {yesterday_date}")
 st.write(yesterday_df)  # This should show at least one row
