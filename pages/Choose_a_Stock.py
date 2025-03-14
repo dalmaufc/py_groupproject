@@ -121,9 +121,12 @@ merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"], inplace=True)
 if "fiscal_period" in merged_df.columns:
     merged_df = merged_df.drop(columns=["fiscal_period"])
 
-# Display stock data
-st.subheader(f"📊 Historical Data for {selected_stock}")
-st.dataframe(merged_df)
+show_merged_df = merged_df
+
+# Display only the last 10 rows
+st.subheader(f"📊 API Live Data for {selected_stock} (Latest 10 Closing Data)")
+show_merged_df["date"] = show_merged_df["date"].dt.date  # Converts to date format
+st.dataframe(show_merged_df.set_index("date").tail(10))
 
 # Load the trained XGBoost model
 try:
@@ -135,9 +138,15 @@ except Exception as e:
     st.error(f"❌ Error loading model: {e}")
     st.stop()
 
-# Predict using yesterday's data
-yesterday_date = pd.to_datetime(end_date)
-yesterday_df = merged_df[merged_df["date"] == yesterday_date][["ticker", "close", "p_e_ratio", "sma_50"]]
+# Convert 'date' column to datetime explicitly
+merged_df["date"] = pd.to_datetime(merged_df["date"])
+
+# Ensure yesterday's date is in correct format
+yesterday_date = pd.to_datetime(end_date).date()
+
+# Filter for yesterday's data
+yesterday_df = merged_df[merged_df["date"] == pd.to_datetime(yesterday_date)][["ticker", "close", "p_e_ratio", "sma_50"]]
+
 
 if not yesterday_df.empty:
     try:

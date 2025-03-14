@@ -2,7 +2,6 @@ import requests
 import pandas as pd
 import time
 
-
 class SimFinAPI:
     """
     A simple API wrapper for SimFin v3, handling share prices, income statements, and balance sheets.
@@ -15,6 +14,7 @@ class SimFinAPI:
             "accept": "application/json"
         }
         self.rate_limit = 0.5  # Respect SimFin's API rate limit (2 requests/sec)
+        self.github_base_url = "https://raw.githubusercontent.com/dalmaufc/py_groupproject/main/logos"
 
     def _respect_rate_limit(self):
         """Ensures requests comply with SimFin's rate limits."""
@@ -33,7 +33,11 @@ class SimFinAPI:
         except Exception as e:
             print(f"Request error: {e}")
             return []
-    
+
+    def get_company_logo(self, ticker):
+        """Returns the direct GitHub URL for the company's logo."""
+        return f"{self.github_base_url}/{ticker}.png"
+
     def get_share_prices(self, ticker, start_date, end_date):
         """Fetches daily share prices for a ticker using the v3 API."""
         url = f"{self.base_url}companies/prices/compact"
@@ -63,6 +67,7 @@ class SimFinAPI:
 
         df = pd.DataFrame(processed_data).dropna()
         return df.sort_values(by="date", ascending=True)
+
     
     def get_income_statement(self, ticker, start_date, end_date):
         """Fetches the income statement data for a ticker."""
