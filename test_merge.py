@@ -3,7 +3,7 @@ import pandas as pd
 from simfin_api import SimFinAPI
 
 # Initialize SimFin API (Replace with your valid API key)
-api = SimFinAPI(api_key="b7f5ad1b-6cd9-4f19-983b-cfddaad8df9c")
+api = SimFinAPI(api_key="e")
 
 # Define parameters
 ticker = "GOOG"
