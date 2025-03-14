@@ -121,6 +121,8 @@ merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"], inplace=True)
 if "fiscal_period" in merged_df.columns:
     merged_df = merged_df.drop(columns=["fiscal_period"])
 
+st.dataframe(merged_df.set_index("date"))
+
 # Display only the last 10 rows
 st.subheader(f"📊 API Live Data for {selected_stock} (Latest 10 Daily Closing)")
 st.dataframe(merged_df.tail(10))
