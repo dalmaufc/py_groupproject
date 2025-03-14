@@ -123,7 +123,7 @@ if "fiscal_period" in merged_df.columns:
 
 # Display only the last 10 rows
 st.subheader(f"📊 API Live Data for {selected_stock} (Latest 10 Closing Data)")
-st.dataframe(merged_df.set_index("date").tail(10))
+st.dataframe(merged_df.set_index(merged_df["date"].dt.date).tail(10))
 
 # Load the trained XGBoost model
 try:
