@@ -132,6 +132,10 @@ merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"], inplace=True)
 if "fiscal_period" in merged_df.columns:
     merged_df = merged_df.drop(columns=["fiscal_period"])
 
+# Drop the fiscal_year column if it exists
+if "fiscal_year" in merged_df.columns:
+    merged_df = merged_df.drop(columns=["fiscal_year"])
+
 show_merged_df = merged_df
 
 # Display only the last 10 rows
