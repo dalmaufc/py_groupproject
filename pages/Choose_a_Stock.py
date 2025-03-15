@@ -36,8 +36,19 @@ stocks = ['AAPL', 'MSFT', 'GOOG', 'AMZN', 'NVDA', 'META', 'TSLA']
 selected_stock = st.sidebar.radio("Choose a stock:", stocks)
 logging.info(f"Selected stock: {selected_stock}")
 
-# Page title
-st.title(f"📈 Live Trading - {selected_stock}")
+# Get company logo dynamically from GitHub
+logo_url = api.get_company_logo(selected_stock)
+
+# Display logo alongside page title
+col1, col2 = st.columns([1, 6])  # Adjust column width for layout
+with col1:
+    try:
+        st.image(logo_url, width=80)
+    except Exception as e:
+        st.warning(f"⚠️ Could not load logo for {selected_stock}")
+
+with col2:
+    st.title(f"Live Trading - {selected_stock}")
 
 # Set time range
 start_date = (datetime.today() - timedelta(days=365)).strftime("%Y-%m-%d")
@@ -121,6 +132,10 @@ merged_df.dropna(subset=["close", "p_e_ratio", "sma_50"], inplace=True)
 if "fiscal_period" in merged_df.columns:
     merged_df = merged_df.drop(columns=["fiscal_period"])
 
+# Drop the fiscal_year column if it exists
+if "fiscal_year" in merged_df.columns:
+    merged_df = merged_df.drop(columns=["fiscal_year"])
+
 show_merged_df = merged_df
 
 # Display only the last 10 rows
@@ -147,17 +162,16 @@ yesterday_date = pd.to_datetime(end_date).date()
 # Filter for yesterday's data
 yesterday_df = merged_df[merged_df["date"] == pd.to_datetime(yesterday_date)][["ticker", "close", "p_e_ratio", "sma_50"]]
 
-
 if not yesterday_df.empty:
     try:
         dmatrix = xgb.DMatrix(yesterday_df[["close", "p_e_ratio", "sma_50"]])
         prediction = model.predict(dmatrix)[0]
         prediction_label = "📈 Buy" if prediction > 0.5 else "📉 Sell"
         yesterday_df["Prediction"] = prediction_label
-        logging.info(f"Prediction generated: {prediction_label}")
+        logging.info(f"Prediction generated for next closing price: {prediction_label}")
         
         # Display predictions
-        st.subheader("📊 Prediction for Today's Close Price Movement")
+        st.subheader("📊 Prediction for Next Closing Price Movement")
         st.write(f"🔮 **{prediction_label}** signal for {selected_stock}")
         st.dataframe(yesterday_df)
     except Exception as e:
@@ -175,4 +189,3 @@ plt.legend()
 st.pyplot(plt)
 
 logging.info("Successfully plotted closing price trend")
-
