@@ -16,3 +16,9 @@ This app can be used via the public link listed above, or, locally. If you'd lik
 # Contact Information
 You can reach the group via its conglomerate email address, mdb2024s1group3@gmail.com, or via the group members individual IE University email addresses. 
 
+# Additional Information
+There are many iterative versions of the application available in the GitHub repository, 'How_Does_Our_App_Works?.py' being the final python script. Please note that other files, stored in the test_code folder, are previous versions where you can see our applications development - however these files are unnecessary to launch the application in a successful manner. 
+The pages folder is crucial for the app's "Choose a Stock" page. 
+The 'simfin_api.py' script provides the API wrapper necessary for the various functions referenced in the API script. 
+Finally the 'mag7_final_model.json' file holds the predictive ML algorithm. It is already trained and doesn't need further development/alteration. 
+Lastly, the requirements.txt, README.md and .gitignore files work as assumed. 
